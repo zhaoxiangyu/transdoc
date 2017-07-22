@@ -2,7 +2,6 @@ package me.verils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Queue;
 
@@ -16,12 +15,17 @@ public class Transdoc {
 	private static final String DIR = "docs";
 
 	public static void main(String[] args) {
-		File docsDir = new File(DIR);
+		String dirPath = DIR;
+		if (args != null && args.length >= 0) {
+			dirPath = args[0];
+		}
+		File docsDir = new File(dirPath);
 		if (docsDir.isDirectory()) {
+			// 扫描目录,处理所有符合条件的文件
 			File[] listFiles = docsDir.listFiles();
 			for (File file : listFiles) {
-				if (file.isFile() && !file.getName().startsWith("~")
-						&& file.getName().endsWith(".doc")) {
+				if (file.isFile() && file.getName().endsWith(".doc")
+						&& !file.getName().startsWith("~")) {
 					handleDocFile(file);
 				}
 			}
@@ -53,10 +57,7 @@ public class Transdoc {
 			File dstFile = new File(dstDir, filename + ".md");
 			FileUtils.writeStringToFile(dstFile, mdContent.toString(), UTF_8);
 			System.out.println("Done.");
-		} catch (IOException e) {
-			e.printStackTrace();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
