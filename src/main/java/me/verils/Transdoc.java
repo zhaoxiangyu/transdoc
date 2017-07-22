@@ -3,21 +3,25 @@ package me.verils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
+import java.util.Queue;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.hwpf.HWPFDocument;
-import org.apache.poi.hwpf.usermodel.Range;
-import org.apache.poi.hwpf.usermodel.Table;
-import org.apache.poi.hwpf.usermodel.TableIterator;
 
 public class Transdoc {
 
+	private static final String UTF_8 = "UTF-8";
+	private static final String DIR = "docs";
+
 	public static void main(String[] args) {
-		File docsDir = new File("./docs");
+		File docsDir = new File(DIR);
 		if (docsDir.isDirectory()) {
 			File[] listFiles = docsDir.listFiles();
 			for (File file : listFiles) {
-				if (file.isFile() && file.getName().endsWith(".doc")) {
+				if (file.isFile() && !file.getName().startsWith("~")
+						&& file.getName().endsWith(".doc")) {
 					handleDocFile(file);
 				}
 			}
@@ -26,34 +30,33 @@ public class Transdoc {
 
 	private static void handleDocFile(File file) {
 		String filename = FilenameUtils.getBaseName(file.getName());
-		System.out.println("==================== " + file.getName() + " ====================");
+		System.out.print("========== " + file.getName() + " ==========");
 
-		File destDir = new File("docs", filename);
-		destDir.mkdir();
+		File dstDir = new File(file.getParent(), filename);
+		dstDir.mkdirs();
 		try (FileInputStream fis = new FileInputStream(file);
 				HWPFDocument doc = new HWPFDocument(fis)) {
+
 			DocParser docParser = DocParser.parseFromFile(file);
-			docParser.getText();
-			docParser.extractPicturesToFile("abc.%i");
+			List<String> paragraphs = docParser.getParagraphs();
+			Queue<String> tables = docParser.getTables();
+			Queue<String> pictures = docParser.extractPicturesToFiles("pic.%i");
 
-			Range docRange = doc.getRange();
-
-			// 处理表格
-			StringBuilder tableContent = new StringBuilder();
-			TableIterator tableIterator = new TableIterator(docRange);
-			while (tableIterator.hasNext()) {
-				Table table = tableIterator.next();
-				if (table.numRows() == 1 && table.getRow(0).numCells() == 1) {
-					// 处理代码块
-					String cellText = table.getRow(0).getCell(0).text();
-					tableContent.append("```\n").append(cellText).append("\n```\n");
-				} else {
-
-				}
+			StringBuilder mdContent = new StringBuilder();
+			for (String paragraph : paragraphs) {
+				paragraph = "{table}".equals(paragraph) ? "\n" + tables.poll() : paragraph;
+				paragraph = "{picture}".equals(paragraph) ? "![](" + pictures.poll() + ")\n"
+						: paragraph;
+				mdContent.append(paragraph).append("\n");
 			}
 
+			File dstFile = new File(dstDir, filename + ".md");
+			FileUtils.writeStringToFile(dstFile, mdContent.toString(), UTF_8);
 			System.out.println("Done.");
 		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
