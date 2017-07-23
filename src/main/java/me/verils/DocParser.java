@@ -74,23 +74,40 @@ public class DocParser {
 	 * @throws Exception
 	 */
 	public List<String> getParagraphs() throws Exception {
-		List<String> paragraphs = new LinkedList<>();
+		LinkedList<String> paragraphs = new LinkedList<>();
 		int numParagraphs = docRange.numParagraphs();
-		int picIndex = 0;
-		boolean isPreParagraphTable = false;
+		int picIndex = 0, listNum = 0, listIndex = 1;
 		for (int i = 0; i < numParagraphs; i++) {
 			Paragraph paragraph = docRange.getParagraph(i);
 			if (hasPicture(paragraph, picIndex)) {
+				// 图片
 				picIndex++;
 				paragraphs.add("{picture}");
 			} else if (paragraph.isInTable()) {
-				if (!isPreParagraphTable) {
+				// 表格
+				if (!"{table}".equals(paragraphs.getLast())) {
 					paragraphs.add("{table}");
 				}
-				isPreParagraphTable = true;
+			} else if (paragraph.isInList()) {
+				// 列表
+				if (paragraph.getIlfo() != listNum) {
+					listNum = paragraph.getIlfo();
+					listIndex = 1;
+				}
+				paragraphs.add(listIndex++ + ". " + paragraph.text().trim());
 			} else {
-				paragraphs.add(WordExtractor.stripFields(paragraph.text()).trim());
-				isPreParagraphTable = false;
+				// 文字
+				int lvl = paragraph.getLvl();
+				StringBuilder text = new StringBuilder();
+				if (lvl != 9) {
+					lvl++;
+					for (int j = 0; j < lvl; j++) {
+						text.append("#");
+					}
+					text.append(" ");
+				}
+				text.append(WordExtractor.stripFields(paragraph.text()).trim());
+				paragraphs.add(text.toString());
 			}
 		}
 		return paragraphs;
@@ -145,7 +162,7 @@ public class DocParser {
 					numCells = tr.numCells();
 					for (int j = 0; j < numCells; j++) {
 						TableCell td = tr.getCell(j);
-						String tdText = td.text().trim();
+						String tdText = td.text().trim().replaceAll("[\r\n]|\r\n", "<br>");
 						tableContent.append(tdText).append("|");
 					}
 					if (i == 0) {

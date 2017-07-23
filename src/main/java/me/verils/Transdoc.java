@@ -16,7 +16,7 @@ public class Transdoc {
 
 	public static void main(String[] args) {
 		String dirPath = DIR;
-		if (args != null && args.length >= 0) {
+		if (args != null && args.length > 0) {
 			dirPath = args[0];
 		}
 		File docsDir = new File(dirPath);
@@ -26,7 +26,12 @@ public class Transdoc {
 			for (File file : listFiles) {
 				if (file.isFile() && file.getName().endsWith(".doc")
 						&& !file.getName().startsWith("~")) {
-					handleDocFile(file);
+					new Thread() {
+						@Override
+						public void run() {
+							handleDocFile(file);
+						}
+					}.start();
 				}
 			}
 		}
@@ -48,8 +53,9 @@ public class Transdoc {
 
 			StringBuilder mdContent = new StringBuilder();
 			for (String paragraph : paragraphs) {
-				paragraph = "{table}".equals(paragraph) ? "\n" + tables.poll() : paragraph;
-				paragraph = "{picture}".equals(paragraph) ? "![](" + pictures.poll() + ")\n"
+				paragraph = "{table}".equals(paragraph) ? "\n" + tables.poll() + "\n"
+						: paragraph;
+				paragraph = "{picture}".equals(paragraph) ? "![](" + pictures.poll() + ")<br>\n"
 						: paragraph;
 				mdContent.append(paragraph).append("\n");
 			}
