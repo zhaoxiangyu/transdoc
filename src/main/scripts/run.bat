@@ -1,10 +1,10 @@
 @echo off
 
-rem Init args string for execute transdoc.jar
+rem Init args string for executing transdoc.jar
 set cmd_dir=%~dp0
 set param_str=
 
-rem get each param then append to "param_str"
+rem get each of params and append to %param_str%
 :get_param
 set param=%1
 if not defined param goto execute
