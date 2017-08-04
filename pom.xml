@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>me.verils</groupId>
 	<artifactId>transdoc</artifactId>
-	<version>2.0.1</version>
+	<version>2.1.0</version>
 
 	<name>transdoc</name>
 	<properties>
@@ -15,11 +15,11 @@
 			<artifactId>poi-scratchpad</artifactId>
 			<version>${poi.version}</version>
 		</dependency>
-		<!-- <dependency> -->
-		<!-- <groupId>org.apache.poi</groupId> -->
-		<!-- <artifactId>poi-ooxml</artifactId> -->
-		<!-- <version>${poi.version}</version> -->
-		<!-- </dependency> -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>${poi.version}</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -49,9 +49,8 @@
 							<createDependencyReducedPom>false</createDependencyReducedPom>
 							<transformers>
 								<!-- 定义主类 -->
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>me.verils.Transdoc</mainClass>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>me.verils.transdoc.Transdoc</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
