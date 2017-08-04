@@ -1,5 +1,7 @@
 ﻿1.将需要转换的文件(doc文档文件)放入本目录下的docs文件夹里,双击"run.bat",等待程序执行结束,即可在docs目录中得到转换后的结果文件
 
-2.双击clean_all.bat可以清空docs目录中所有文件和目录
+2.将需要转换的文件(doc文档文件)直接拖到"run.bat"文件图标上即可运行,转换后的文件将在docs目录中生成
 
-3.双击clean_result.bat可以清理docs目录中生成的结果目录,并保留doc文档文件
+3.双击clean_all.bat可以清空docs目录中所有文件和目录
+
+4.双击clean_result.bat可以清理docs目录中生成的结果目录,并保留doc文档文件
