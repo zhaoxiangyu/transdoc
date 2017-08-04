@@ -29,9 +29,9 @@
 		<fileSet>
 			<directory>docs</directory>
 			<outputDirectory>./docs</outputDirectory>
-			<includes>
-				<include>demo.doc</include>
-			</includes>
+			<excludes>
+				<exclude>**/*</exclude>
+			</excludes>
 		</fileSet>
 	</fileSets>
 </assembly>
