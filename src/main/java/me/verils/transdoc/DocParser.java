@@ -1,4 +1,4 @@
-package me.verils;
+package me.verils.transdoc;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,21 +20,20 @@ import org.apache.poi.hwpf.usermodel.TableCell;
 import org.apache.poi.hwpf.usermodel.TableIterator;
 import org.apache.poi.hwpf.usermodel.TableRow;
 
+import me.verils.transdoc.model.DocContent;
+import me.verils.transdoc.model.DocParagraph;
+import me.verils.transdoc.model.DocTable;
+
 public class DocParser {
 
 	/** doc文档对象 */
 	private HWPFDocument doc;
 	/** 文档整体范围 */
 	private Range docRange;
-
-	/** 文档的所有段落 */
-	private List<DocParagraph> paragraphs;
-	/** 文档的所有表格和代码块 */
-	private List<DocTable> tables;
+	/** 文档内容 */
+	private DocContent docContent;
 	/** 文档的图片对象 */
 	private List<DocPicture> pictures;
-	/** 文档的所有图片导出后的本地相对路径 */
-	private List<String> picturePaths;
 
 	/**
 	 * 私有构造函数
@@ -47,8 +46,9 @@ public class DocParser {
 	public DocParser(File file) throws Exception {
 		doc = new HWPFDocument(new FileInputStream(file));
 		docRange = doc.getRange();
-		parseTables();
+		docContent = new DocContent();
 		parsePictures();
+		parseTables();
 		parseParagraphs(docRange);
 	}
 
@@ -62,7 +62,7 @@ public class DocParser {
 	 * @throws IOException
 	 */
 	public void extractPicturesToFiles(File picDir, String picNamePattern) throws IOException {
-		picturePaths.clear();
+		docContent.getPicturePaths().clear();
 		if (!pictures.isEmpty()) {
 			picDir.mkdirs();
 			String picDirName = picDir.getName();
@@ -71,7 +71,7 @@ public class DocParser {
 				String filename = picNamePattern.replace("%d", (i < 10 ? "0" : "") + i) + "."
 						+ picture.suggestFileExtension();
 				File picFile = new File(picDir, filename);
-				picturePaths.add(picDirName + "/" + picFile.getName());
+				docContent.getPicturePaths().add("./" + picDirName + "/" + picFile.getName());
 				FileOutputStream fos = new FileOutputStream(picFile);
 				picture.writeImageContent(fos);
 				fos.flush();
@@ -80,37 +80,8 @@ public class DocParser {
 		}
 	}
 
-	/**
-	 * 获取文档的所有段落,包含标题,文本段落,以及表格和图片的占位符,占位符占一个独立的段落,每行视为一个段落
-	 * 
-	 * @return 文档解析后的所有段落
-	 */
-	public List<DocParagraph> listParagraphs() {
-		List<DocParagraph> paragraphs = new ArrayList<DocParagraph>();
-		paragraphs.addAll(this.paragraphs);
-		return paragraphs;
-	}
-
-	/**
-	 * 获得文档中的所有列表对象,对该列表操作不会影响到原有数据
-	 * 
-	 * @return 所有列表对象
-	 */
-	public LinkedList<DocTable> listTables() {
-		LinkedList<DocTable> tables = new LinkedList<DocTable>();
-		tables.addAll(this.tables);
-		return tables;
-	}
-
-	/**
-	 * 获得文档中的所有图片对象,对该列表操作不会影响到原有数据
-	 * 
-	 * @return 所有图片对象
-	 */
-	public LinkedList<String> listPictures() {
-		LinkedList<String> pictures = new LinkedList<String>();
-		pictures.addAll(this.picturePaths);
-		return pictures;
+	public DocContent getDocContent() {
+		return docContent;
 	}
 
 	/**
@@ -130,7 +101,7 @@ public class DocParser {
 				// 代码块
 				docTable = new DocTable(numRows, numCells);
 				TableCell cell = tr.getCell(0);
-				docTable.setCell(0, 0, this.getCellTextContent(cell, true));
+				docTable.setCell(0, 0, this.getCellContent(cell, true));
 			} else {
 				// 正常表格
 				int maxNumCells = numCells;
@@ -144,18 +115,18 @@ public class DocParser {
 					tr = table.getRow(i);
 					numCells = tr.numCells();
 					for (int j = 0; j < maxNumCells; j++) {
-						StringBuilder tdContent = new StringBuilder();
+						DocContent cellContent = new DocContent();
 						if (j < numCells) {
 							TableCell cell = tr.getCell(j);
-							tdContent.append(this.getCellTextContent(cell, false));
+							cellContent = this.getCellContent(cell, false);
 						}
-						docTable.setCell(i, j, tdContent.toString());
+						docTable.setCell(i, j, cellContent);
 					}
 				}
 			}
 			tables.add(docTable);
 		}
-		this.tables = tables;
+		docContent.setTables(tables);
 	}
 
 	/**
@@ -167,22 +138,20 @@ public class DocParser {
 	 *            是否是代码块
 	 * @return 提取出来的文本内容
 	 */
-	private String getCellTextContent(TableCell cell, boolean isCodeBlock) {
+	private DocContent getCellContent(TableCell cell, boolean isCodeBlock) {
 		int numParagraphs = cell.numParagraphs();
-		StringBuilder tdContent = new StringBuilder();
+		List<DocParagraph> paragraphs = new ArrayList<DocParagraph>();
 		for (int k = 0; k < numParagraphs; k++) {
 			String text = WordExtractor.stripFields(cell.getParagraph(k).text());
 			if (!isCodeBlock) {
 				text = text.trim();
 			}
+			text = rtrim(text);
 			if (!"".equals(text)) {
-				tdContent.append(text).append("\n");
+				paragraphs.add(new DocParagraph(text));
 			}
 		}
-		if (tdContent.length() > 0) {
-			tdContent.deleteCharAt(tdContent.length() - 1);
-		}
-		return tdContent.toString();
+		return new DocContent(paragraphs);
 	}
 
 	/**
@@ -200,7 +169,7 @@ public class DocParser {
 			}
 		}
 		this.pictures = docPictures;
-		this.picturePaths = new LinkedList<String>();
+		docContent.setPicturePaths(new LinkedList<String>());
 	}
 
 	/**
@@ -212,43 +181,79 @@ public class DocParser {
 	private void parseParagraphs(Range range) throws Exception {
 		LinkedList<DocParagraph> paragraphs = new LinkedList<DocParagraph>();
 		int numParagraphs = range.numParagraphs();
-		int picIndex = 0, listNum = 0, listIndex = 1;
+		int picIndex = 0, listNum = 0, listIndex = 0;
+		boolean isInList = false;
 		for (int i = 0; i < numParagraphs; i++) {
 			Paragraph paragraph = range.getParagraph(i);
 			if (hasPicture(paragraph, picIndex)) {
 				// 图片
 				picIndex++;
-				paragraphs.add(new DocParagraph("{picture}"));
+				DocParagraph docParagraph = new DocParagraph("{picture}");
+				docParagraph.setInList(isInList);
+				paragraphs.add(docParagraph);
 			} else if (paragraph.isInTable()) {
 				// 表格或代码块
 				if (paragraphs.isEmpty() || !"{table}".equals(paragraphs.getLast().getContent())) {
-					paragraphs.add(new DocParagraph("{table}"));
+					DocParagraph docParagraph = new DocParagraph("{table}");
+					docParagraph.setInList(isInList);
+					paragraphs.add(docParagraph);
 				}
 			} else if (paragraph.isInList()) {
 				// 列表
+				StringBuilder content = new StringBuilder();
+				// 标题段落处理(由doc段落大纲级别定义)
 				if (paragraph.getIlfo() != listNum) {
 					listNum = paragraph.getIlfo();
-					listIndex = 1;
+					listIndex = 0;
 				}
-				paragraphs
-						.add(new DocParagraph(listIndex++ + ". " + WordExtractor.stripFields(paragraph.text()).trim()));
+				content.append("{l").append(++listIndex).append("}")
+						.append(WordExtractor.stripFields(paragraph.text()).trim());
+				DocParagraph docParagraph = new DocParagraph(content.toString());
+				docParagraph.setInList(false);
+				paragraphs.add(docParagraph);
+				isInList = true;
+				// System.out.println("listNum: " + listNum + ", listIndex: " +
+				// listIndex + ", listLvl: " + listLvl);
 			} else {
 				// 文字
-				int lvl = paragraph.getLvl();
 				String text = paragraph.text();
 				if (null == text || "".equals(text.trim())) {
 					continue;
 				}
-				StringBuilder sb = new StringBuilder();
+				DocParagraph docParagraph = new DocParagraph(null);
+				StringBuilder content = new StringBuilder();
+				int lvl = paragraph.getLvl();
 				if (lvl >= 0 && lvl < 6) {
 					// 标题段落处理(由doc段落大纲级别定义)
-					sb.append("{h").append(++lvl).append("}");
+					content.append("{h").append(++lvl).append("}")
+							.append(WordExtractor.stripFields(paragraph.text()).trim());
+					isInList = false;
+				} else {
+					int numCharacterRuns = paragraph.numCharacterRuns();
+					for (int j = 0; j < numCharacterRuns; j++) {
+						// 检测文本样式
+						CharacterRun characterRun = paragraph.getCharacterRun(j);
+						String prefix = "", suffix = "";
+						if (!"".equals(characterRun.text().trim())) {
+							if (characterRun.isBold()) {
+								prefix = suffix = "**";
+							} else if (characterRun.isItalic()) {
+								prefix = suffix = "*";
+							}
+						}
+						if (content.length() > 0 && content.charAt(content.length() - 1) == '*') {
+							content.append(" ");
+						}
+						content.append(prefix).append(characterRun.text()).append(suffix);
+					}
 				}
-				sb.append(WordExtractor.stripFields(text).trim());
-				paragraphs.add(new DocParagraph(sb.toString()));
+				String contentStr = WordExtractor.stripFields(content.toString()).trim();
+				docParagraph.setInList(isInList);
+				docParagraph.setContent(contentStr);
+				paragraphs.add(docParagraph);
 			}
 		}
-		this.paragraphs = paragraphs;
+		docContent.setParagraphs(paragraphs);
 	}
 
 	/**
@@ -268,6 +273,15 @@ public class DocParser {
 		CharacterRun characterRun = docPicture.characterRun;
 		return characterRun.getStartOffset() >= paragraph.getStartOffset()
 				&& characterRun.getEndOffset() <= paragraph.getEndOffset();
+	}
+
+	private String rtrim(String str) {
+		int len = str.length();
+		char[] val = str.toCharArray();
+		while (len > 0 && val[len - 1] <= ' ') {
+			len--;
+		}
+		return str.substring(0, len);
 	}
 }
 

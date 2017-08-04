@@ -1,4 +1,4 @@
-package me.verils;
+package me.verils.transdoc;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -6,9 +6,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.util.List;
 import java.util.Properties;
-import java.util.Queue;
+
+import me.verils.transdoc.model.DocContent;
 
 public class Transdoc {
 
@@ -102,32 +102,18 @@ public class Transdoc {
 			File mdFile = new File(dstDir, docName + ".md");
 			File picDir = new File(dstDir, picDirName);
 
-			// 解析并获取基本信息内容
+			// 解析并获取doc解析的通用数据对象
 			DocParser docParser = new DocParser(file);
 			docParser.extractPicturesToFiles(picDir, picFilenamePattern);
-			List<DocParagraph> paragraphs = docParser.listParagraphs();
-			Queue<DocTable> tables = docParser.listTables();
-			Queue<String> pictures = docParser.listPictures();
+			DocContent docContent = docParser.getDocContent();
 
-			// 将文档信息进行简单组装,获取md格式文本
-			StringBuilder mdContent = new StringBuilder();
-			for (DocParagraph paragraph : paragraphs) {
-				String content = paragraph.getContent();
-				System.out.println(content);
-				content = content.replace("{h1}", "\n# ");
-				content = content.replace("{h2}", "\n## ");
-				content = content.replace("{h3}", "\n### ");
-				content = content.replace("{h4}", "\n#### ");
-				content = content.replace("{h5}", "\n##### ");
-				content = content.replace("{h6}", "\n###### ");
-				content = "{table}".equals(content) ? toTableMDText(tables.poll()) : content;
-				content = "{picture}".equals(content) ? "![](" + pictures.poll() + ")" : content;
-				mdContent.append(content).append("\n");
-			}
+			// 将通用数据对象内容转换为md格式
+			MarkdownConverter mdConvertor = new MarkdownConverter(docContent);
+			String mdString = mdConvertor.toMdString();
 
 			// 输出到文件
 			PrintWriter pw = new PrintWriter(mdFile, "UTF-8");
-			pw.print(mdContent.toString().trim());
+			pw.print(mdString);
 			pw.flush();
 			pw.close();
 
@@ -137,40 +123,6 @@ public class Transdoc {
 			e.printStackTrace();
 			System.err.println(filename + " - 转换失败!!");
 		}
-	}
-
-	/**
-	 * 将表格数据对象转换为有效的md格式文本
-	 * 
-	 * @param table
-	 *            表格对象
-	 * @return md格式的表格内容
-	 */
-	private String toTableMDText(DocTable table) {
-		StringBuilder tableContent = new StringBuilder();
-		if (table == null) {
-		} else if (table.isBlock()) {
-			tableContent.append("\n```\n").append(table.getCell(0, 0)).append("\n```\n");
-		} else {
-			int rownum = table.getRownum();
-			int colnum = table.getColnum();
-			tableContent.append("\n");
-			for (int i = 0; i < rownum; i++) {
-				tableContent.append("|");
-				for (int j = 0; j < colnum; j++) {
-					String text = table.getCell(i, j).replaceAll("\\n", "<br>");
-					tableContent.append(text).append("|");
-				}
-				if (i == 0) {
-					tableContent.append("\n|");
-					for (int j = 0; j < colnum; j++) {
-						tableContent.append("----|");
-					}
-				}
-				tableContent.append("\n");
-			}
-		}
-		return tableContent.toString();
 	}
 
 	/**
