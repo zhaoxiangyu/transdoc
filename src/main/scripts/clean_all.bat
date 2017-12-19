@@ -7,5 +7,6 @@ rem delete all directories and files of .\docs
 rd /s/q %doc_dir%
 md %doc_dir%
 
-echo docs direcroty has already bean cleaned
+echo Delete done!
+echo;
 pause
