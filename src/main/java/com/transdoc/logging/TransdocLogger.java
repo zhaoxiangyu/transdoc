@@ -1,5 +1,6 @@
 package com.transdoc.logging;
 
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -17,7 +18,8 @@ public class TransdocLogger {
 	static {
 		LogManager logManager = LogManager.getLogManager();
 		try {
-			logManager.readConfiguration(TransdocLogger.class.getResourceAsStream("/logging.properties"));
+			logManager.readConfiguration(
+					TransdocLogger.class.getResourceAsStream("/logging.properties"));
 		} catch (Exception e) {
 		}
 	}
@@ -85,13 +87,28 @@ public class TransdocLogger {
 
 	private void log(Level level, String message) {
 		if (logger.isLoggable(level)) {
-			logger.log(level, message);
+			try {
+				logger.log(level, message);
+			} catch (Exception e) {
+				handleIOException(e);
+			}
 		}
 	}
 
 	private void log(Level level, String message, Throwable thrown) {
 		if (logger.isLoggable(level)) {
-			logger.log(level, message, thrown);
+			try {
+				logger.log(level, message, thrown);
+			} catch (Exception e) {
+				handleIOException(e);
+			}
+		}
+	}
+
+	private void handleIOException(Exception e) {
+		// 打印出控制台
+		if (e instanceof IOException) {
+			logger.log(Level.INFO, "日志记录发生错误，无法写出内容到文件！");
 		}
 	}
 
