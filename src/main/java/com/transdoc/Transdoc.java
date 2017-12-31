@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.transdoc.exception.WordTransformingException;
 import com.transdoc.logging.TransdocLogger;
+import com.transdoc.util.FileUtils;
 
 /**
  * Transdoc
@@ -35,6 +36,8 @@ public class Transdoc {
 		}
 	};
 
+	private static final String DEFAULT_DIR = "./docs";
+
 	/**
 	 * 程序入口函数,通过cmd执行传入word文档的路径,可直接读取文件进行转换操作.<br>
 	 * 如没有传入此参数,则从预先配置的文件夹中读取文件进行转换
@@ -45,15 +48,13 @@ public class Transdoc {
 	 */
 	public static void main(String[] paths) throws IOException {
 		LOGGER.info("========== Transdoc ==========");
-		
-		String defaultDir = "./docs";
-		DocTransformer transformer = new DocTransformer(defaultDir);
+		Transformer transformer = new Transformer();
 
 		List<File> files = null;
 		if (paths.length > 0) {
 			files = getFilesFromPathParams(paths);
 		} else {
-			files = getFilesFromDirectory(defaultDir);
+			files = getFilesFromDirectory(DEFAULT_DIR);
 		}
 
 		if (files != null) {
@@ -88,25 +89,41 @@ public class Transdoc {
 		return files;
 	}
 
-	private static void process(final DocTransformer transformer, List<File> files) {
+	private static void process(final Transformer transformer, List<File> files) {
 		ThreadFactory threadFactory = Executors.defaultThreadFactory();
-		ExecutorService executor = new ThreadPoolExecutor(5, 50, 5L, TimeUnit.SECONDS,
+		ExecutorService executor = new ThreadPoolExecutor(4, 50, 5L, TimeUnit.SECONDS,
 				new SynchronousQueue<Runnable>(), threadFactory);
-	
+
 		for (final File file : files) {
 			executor.submit(new Runnable() {
 				@Override
 				public void run() {
 					try {
-						long spendTime = transformer.toMardkown(file);
+						long startTime = System.currentTimeMillis();
+
+						String docFilename = file.getName();
+						docFilename = docFilename.substring(0, docFilename.lastIndexOf("."));
+
+						File destDir = new File(DEFAULT_DIR, docFilename);
+						destDir.mkdir();
+
+						File pictureDir = new File(destDir, "pictures");
+						String markdown = transformer.toMarkdown(file, true, pictureDir);
+
+						File mdFile = new File(destDir, docFilename + ".md");
+						FileUtils.writeStringToFile(mdFile, markdown, "UTF-8");
+
+						long spendTime = System.currentTimeMillis() - startTime;
 						LOGGER.info(file.getName() + " - 转换成功，用时: " + spendTime + "ms");
 					} catch (WordTransformingException e) {
+						LOGGER.warn(e.getMessage(), e);
+					} catch (IOException e) {
 						LOGGER.warn(e.getMessage(), e);
 					}
 				}
 			});
 		}
-		
+
 		executor.shutdown();
 	}
 }

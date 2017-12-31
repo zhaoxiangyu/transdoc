@@ -27,6 +27,11 @@ public class MarkdownConverter {
 	}
 
 	private String toMdString(DocContent docContent) {
+		if (docContent == null) {
+			// 合并单元格时,可能存在空的单元格
+			return "";
+		}
+		
 		List<DocParagraph> paragraphs = docContent.listParagraphs();
 		Queue<DocTable> tables = docContent.listTables();
 		Queue<String> pictures = docContent.listPictures();

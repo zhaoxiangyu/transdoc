@@ -4,6 +4,4 @@
 /.settings/
 /docs/
 /demos/
-/*.log
-/error.log.1
-/error.log.1.lck
+/log/*
