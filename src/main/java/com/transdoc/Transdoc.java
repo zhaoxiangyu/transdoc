@@ -27,7 +27,7 @@ public class Transdoc {
 
 	private static final TransdocLogger LOGGER = TransdocLogger.getLog(Transdoc.class);
 
-	private static final FileFilter WORD_FILE_FILTER = new FileFilter() {
+	static final FileFilter WORD_FILE_FILTER = new FileFilter() {
 		@Override
 		public boolean accept(File file) {
 			String filename = file.getName();
@@ -36,14 +36,13 @@ public class Transdoc {
 		}
 	};
 
-	private static final String DEFAULT_DIR = "./docs";
+	static final String DEFAULT_DIR = "./docs";
 
 	/**
 	 * 程序入口函数,通过cmd执行传入word文档的路径,可直接读取文件进行转换操作.<br>
-	 * 如没有传入此参数,则从预先配置的文件夹中读取文件进行转换
 	 * 
 	 * @param paths
-	 *            文件路径,
+	 *            带转换的doc文件路径
 	 * @throws IOException
 	 */
 	public static void main(String[] paths) throws IOException {
@@ -62,6 +61,12 @@ public class Transdoc {
 		}
 	}
 
+	/**
+	 * 获取命令执行参数中的文件
+	 * 
+	 * @param paths
+	 * @return 文件列表
+	 */
 	private static List<File> getFilesFromPathParams(String[] paths) {
 		List<File> files = new ArrayList<File>();
 		for (String path : paths) {
@@ -70,6 +75,12 @@ public class Transdoc {
 		return files;
 	}
 
+	/**
+	 * 从默认文件夹中获取文件
+	 * 
+	 * @param dirPath
+	 * @return 文件列表
+	 */
 	private static List<File> getFilesFromDirectory(String dirPath) {
 		List<File> files = new ArrayList<File>();
 		File srcDir = new File(dirPath);

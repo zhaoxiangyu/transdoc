@@ -1,10 +1,11 @@
 package com.transdoc;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.io.File;
 import java.io.IOException;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -23,10 +24,14 @@ public class TransformerTest {
 	}
 
 	@Test
-	@Ignore
 	public void testToMardkown() throws IOException {
-		File file = new File(".");
-		transformer.toMarkdown(file);
+		File dir = new File(Transdoc.DEFAULT_DIR);
+		File[] files = dir.listFiles(Transdoc.WORD_FILE_FILTER);
+		if (files.length > 0) {
+			String markdown = transformer.toMarkdown(files[0]);
+			System.out.println(markdown);
+			assertNotNull(markdown);
+		}
 	}
 
 }

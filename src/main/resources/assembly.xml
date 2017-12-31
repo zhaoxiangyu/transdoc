@@ -1,11 +1,10 @@
-<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
 	<id>bin</id>
 	<formats>
 		<format>zip</format>
 	</formats>
-	
+
 	<!-- 项目文件打包 -->
 	<fileSets>
 		<fileSet>
@@ -38,8 +37,15 @@
 				<exclude>**/*</exclude>
 			</excludes>
 		</fileSet>
+		<fileSet>
+			<directory>log</directory>
+			<outputDirectory>./log</outputDirectory>
+			<excludes>
+				<exclude>**/*</exclude>
+			</excludes>
+		</fileSet>
 	</fileSets>
-	
+
 	<!-- 依赖文件打包 -->
 	<dependencySets>
 		<dependencySet>
