@@ -2,6 +2,7 @@ package com.transdoc.parser;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -23,8 +24,8 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 
 import com.transdoc.model.Article;
 import com.transdoc.model.DocParagraph;
-import com.transdoc.model.Image;
 import com.transdoc.model.DocTable;
+import com.transdoc.model.Image;
 import com.transdoc.util.StringUtils;
 
 /**
@@ -40,7 +41,7 @@ public class DocxParser extends BaseWordParser {
 	/** 文档内容 */
 	private Article article;
 	/** 文档的图片对象 */
-	private List<DocxPicture> pictures;
+	private List<DocxPictureWrapper> pictures;
 
 	DocxParser(InputStream input) throws IOException {
 		doc = new XWPFDocument(input);
@@ -57,21 +58,12 @@ public class DocxParser extends BaseWordParser {
 	@Override
 	public List<Image> getImages() {
 		List<Image> images = new ArrayList<Image>();
-		if (!pictures.isEmpty()) {
-			for (DocxPicture docPicture : pictures) {
-				XWPFPictureData picture = docPicture.picture;
-
-				Image image = new Image();
-				image.setContent(picture.getData());
-				image.setExtension(picture.suggestFileExtension());
-				images.add(image);
-			}
-		}
+		images.addAll(pictures);
 		return images;
 	}
 
 	private void parse() {
-		List<DocxPicture> docxPictures = new LinkedList<DocxPicture>();
+		List<DocxPictureWrapper> docxPictures = new LinkedList<DocxPictureWrapper>();
 		LinkedList<DocParagraph> docParagraphs = new LinkedList<DocParagraph>();
 		List<DocTable> docTables = new LinkedList<DocTable>();
 
@@ -98,7 +90,11 @@ public class DocxParser extends BaseWordParser {
 					for (XWPFPicture xwpfPicture : embeddedPictures) {
 						docParagraphs.add(new DocParagraph("{picture}", !isListStart && isInList));
 						XWPFPictureData pictureData = xwpfPicture.getPictureData();
-						docxPictures.add(new DocxPicture(pictureData));
+
+						DocxPictureWrapper pictureWrapper = new DocxPictureWrapper(pictureData);
+						pictureWrapper.setPictureName(pictureData.getFileName());
+						pictureWrapper.setExtension(pictureData.suggestFileExtension());
+						docxPictures.add(pictureWrapper);
 					}
 				}
 
@@ -219,11 +215,21 @@ public class DocxParser extends BaseWordParser {
 /**
  * 内部类,装载docx文件解析出的picture对象
  */
-class DocxPicture {
+class DocxPictureWrapper extends Image {
 	XWPFPictureData picture;
 
-	DocxPicture(XWPFPictureData picture) {
+	DocxPictureWrapper(XWPFPictureData picture) {
 		super();
 		this.picture = picture;
+	}
+
+	@Override
+	public byte[] getData() {
+		return picture.getData();
+	}
+
+	@Override
+	public void writeTo(OutputStream out) throws IOException {
+		out.write(getData());
 	}
 }

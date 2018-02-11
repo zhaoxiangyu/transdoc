@@ -56,7 +56,7 @@ public class Transformer {
 			article.getPicturePaths().add(pictureDir.getName() + "/" + picFilename);
 
 			File picFile = new File(pictureDir, picFilename);
-			FileUtils.writeByteArrayToFile(picFile, pictureData.getContent());
+			FileUtils.writeByteArrayToFile(picFile, pictureData.getData());
 		}
 	}
 }

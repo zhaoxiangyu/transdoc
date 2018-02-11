@@ -2,6 +2,7 @@ package com.transdoc.parser;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,8 +20,8 @@ import org.apache.poi.hwpf.usermodel.TableRow;
 
 import com.transdoc.model.Article;
 import com.transdoc.model.DocParagraph;
-import com.transdoc.model.Image;
 import com.transdoc.model.DocTable;
+import com.transdoc.model.Image;
 import com.transdoc.util.StringUtils;
 
 /**
@@ -38,7 +39,7 @@ public class DocParser extends BaseWordParser {
 	/** 文档内容 */
 	private Article article;
 	/** 文档的图片对象 */
-	private List<DocPicture> pictures;
+	private List<DocPictureWrapper> pictures;
 
 	DocParser(InputStream input) throws IOException {
 		doc = new HWPFDocument(input);
@@ -58,16 +59,7 @@ public class DocParser extends BaseWordParser {
 	@Override
 	public List<Image> getImages() {
 		List<Image> images = new ArrayList<Image>();
-		if (!pictures.isEmpty()) {
-			for (DocPicture docPicture : pictures) {
-				Picture picture = docPicture.picture;
-
-				Image image = new Image();
-				image.setContent(picture.getContent());
-				image.setExtension(picture.suggestFileExtension());
-				images.add(image);
-			}
-		}
+		images.addAll(pictures);
 		return images;
 	}
 
@@ -75,14 +67,19 @@ public class DocParser extends BaseWordParser {
 	 * 解析doc文档,获取所有图片内容
 	 */
 	private void parsePictures() {
-		List<DocPicture> docPictures = new ArrayList<DocPicture>();
+		List<DocPictureWrapper> docPictures = new ArrayList<DocPictureWrapper>();
 		PicturesTable picturesTable = doc.getPicturesTable();
 		int numCharacterRuns = docRange.numCharacterRuns();
 		for (int i = 0; i < numCharacterRuns; i++) {
 			CharacterRun characterRun = docRange.getCharacterRun(i);
 			if (picturesTable.hasPicture(characterRun)) {
 				Picture picture = picturesTable.extractPicture(characterRun, false);
-				docPictures.add(new DocPicture(characterRun, picture));
+				
+				DocPictureWrapper pictureWrapper = new DocPictureWrapper(characterRun, picture);
+				pictureWrapper.setPictureName(picture.suggestFullFileName());
+				pictureWrapper.setExtension(picture.suggestFileExtension());
+				pictureWrapper.setContentType(picture.getMimeType());
+				docPictures.add(pictureWrapper);
 			}
 		}
 		this.pictures = docPictures;
@@ -247,7 +244,7 @@ public class DocParser extends BaseWordParser {
 		if (picIndex >= pictures.size()) {
 			return false;
 		}
-		DocPicture docPicture = pictures.get(picIndex);
+		DocPictureWrapper docPicture = (DocPictureWrapper) pictures.get(picIndex);
 		CharacterRun characterRun = docPicture.characterRun;
 		return characterRun.getStartOffset() >= paragraph.getStartOffset()
 				&& characterRun.getEndOffset() <= paragraph.getEndOffset();
@@ -269,13 +266,23 @@ public class DocParser extends BaseWordParser {
 /**
  * 内部类,装载doc文件解析出的picture对象和对应的characterRun
  */
-class DocPicture {
+class DocPictureWrapper extends Image {
 	CharacterRun characterRun;
 	Picture picture;
 
-	DocPicture(CharacterRun characterRun, Picture picture) {
+	DocPictureWrapper(CharacterRun characterRun, Picture picture) {
 		super();
 		this.characterRun = characterRun;
 		this.picture = picture;
+	}
+
+	@Override
+	public byte[] getData() {
+		return picture.getContent();
+	}
+
+	@Override
+	public void writeTo(OutputStream out) throws IOException {
+		picture.writeImageContent(out);
 	}
 }
