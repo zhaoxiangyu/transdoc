@@ -6,7 +6,7 @@ package com.transdoc.model;
  * @author Verils
  * @date 2017-10-20
  */
-public class DocPictureData {
+public class Image {
 
 	private String name;
 	private String contentType;

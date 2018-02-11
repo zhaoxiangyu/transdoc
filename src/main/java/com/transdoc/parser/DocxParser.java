@@ -21,9 +21,9 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDecimalNumber;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTNumPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 
-import com.transdoc.model.DocContent;
+import com.transdoc.model.Article;
 import com.transdoc.model.DocParagraph;
-import com.transdoc.model.DocPictureData;
+import com.transdoc.model.Image;
 import com.transdoc.model.DocTable;
 import com.transdoc.util.StringUtils;
 
@@ -38,36 +38,36 @@ public class DocxParser extends BaseWordParser {
 	/** doc文档对象 */
 	private XWPFDocument doc;
 	/** 文档内容 */
-	private DocContent docContent;
+	private Article article;
 	/** 文档的图片对象 */
 	private List<DocxPicture> pictures;
 
 	DocxParser(InputStream input) throws IOException {
 		doc = new XWPFDocument(input);
 		input.close();
-		docContent = new DocContent();
+		article = new Article();
 		parse();
 	}
 
 	@Override
-	public DocContent getDocContent() {
-		return docContent;
+	public Article getArticle() {
+		return article;
 	}
 
 	@Override
-	public List<DocPictureData> getPictureDatas() {
-		List<DocPictureData> docPictureDatas = new ArrayList<DocPictureData>();
+	public List<Image> getImages() {
+		List<Image> images = new ArrayList<Image>();
 		if (!pictures.isEmpty()) {
 			for (DocxPicture docPicture : pictures) {
 				XWPFPictureData picture = docPicture.picture;
 
-				DocPictureData docPictureData = new DocPictureData();
-				docPictureData.setContent(picture.getData());
-				docPictureData.setExtension(picture.suggestFileExtension());
-				docPictureDatas.add(docPictureData);
+				Image image = new Image();
+				image.setContent(picture.getData());
+				image.setExtension(picture.suggestFileExtension());
+				images.add(image);
 			}
 		}
-		return docPictureDatas;
+		return images;
 	}
 
 	private void parse() {
@@ -151,7 +151,7 @@ public class DocxParser extends BaseWordParser {
 				if (numRows == 1 && numCells == 1) {
 					// 代码块
 					docTable = new DocTable(numRows, numCells);
-					DocContent cellContent = this.getCellContent(tds.get(0), true);
+					Article cellContent = this.getCellContent(tds.get(0), true);
 					docTable.setCell(0, 0, cellContent);
 				} else {
 					// 表格
@@ -168,7 +168,7 @@ public class DocxParser extends BaseWordParser {
 						tds = tr.getTableCells();
 						numCells = tds.size();
 						for (int j = 0; j < numCells; j++) {
-							DocContent cellContent = new DocContent();
+							Article cellContent = new Article();
 							if (j < numCells) {
 								cellContent = this.getCellContent(tr.getCell(j), false);
 							}
@@ -184,8 +184,8 @@ public class DocxParser extends BaseWordParser {
 			}
 		}
 		pictures = docxPictures;
-		docContent.setParagraphs(docParagraphs);
-		docContent.setTables(docTables);
+		article.setParagraphs(docParagraphs);
+		article.setTables(docTables);
 	}
 
 	/**
@@ -197,7 +197,7 @@ public class DocxParser extends BaseWordParser {
 	 *            是否是代码块
 	 * @return 提取出来的文本内容
 	 */
-	private DocContent getCellContent(XWPFTableCell tableCell, boolean isCodeBlock) {
+	private Article getCellContent(XWPFTableCell tableCell, boolean isCodeBlock) {
 		List<DocParagraph> paragraphs = new ArrayList<DocParagraph>();
 		List<XWPFParagraph> xwpfParagraphs = tableCell.getParagraphs();
 		for (XWPFParagraph paragraph : xwpfParagraphs) {
@@ -212,7 +212,7 @@ public class DocxParser extends BaseWordParser {
 				paragraphs.add(new DocParagraph(text));
 			}
 		}
-		return new DocContent(paragraphs);
+		return new Article(paragraphs);
 	}
 }
 

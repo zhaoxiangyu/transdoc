@@ -10,7 +10,7 @@ import java.util.List;
  * @author Verils
  * @date 2017-10-20
  */
-public class DocContent {
+public class Article {
 
 	/** 文档的所有段落 */
 	List<DocParagraph> paragraphs;
@@ -19,17 +19,17 @@ public class DocContent {
 	/** 文档的所有图片导出后的本地相对路径 */
 	List<String> picturePaths;
 
-	public DocContent() {
+	public Article() {
 		paragraphs = new ArrayList<DocParagraph>();
 		picturePaths = new ArrayList<String>();
 	}
 
-	public DocContent(DocParagraph paragraph) {
+	public Article(DocParagraph paragraph) {
 		this();
 		paragraphs.add(paragraph);
 	}
 
-	public DocContent(List<DocParagraph> paragraphs) {
+	public Article(List<DocParagraph> paragraphs) {
 		this.paragraphs = paragraphs;
 	}
 

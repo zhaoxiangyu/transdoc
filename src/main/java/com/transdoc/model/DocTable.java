@@ -14,30 +14,30 @@ public class DocTable {
 	private int colnum;
 	private boolean block;
 
-	private DocContent[][] data;
+	private Article[][] data;
 
 	public DocTable(int rownum, int colnum) {
 		this.rownum = rownum;
 		this.colnum = colnum;
 		this.block = rownum == 1 && colnum == 1;
-		this.data = new DocContent[rownum][colnum];
+		this.data = new Article[rownum][colnum];
 	}
 
-	public DocContent[] getRow(int rownum) {
+	public Article[] getRow(int rownum) {
 		return data[rownum];
 	}
 
-	public void setRow(int rownum, DocContent[] row) {
+	public void setRow(int rownum, Article[] row) {
 		if (rownum >= 0 && rownum < this.rownum) {
 			data[rownum] = row;
 		}
 	}
 
-	public DocContent getCell(int rownum, int colnum) {
+	public Article getCell(int rownum, int colnum) {
 		return data[rownum][colnum];
 	}
 
-	public void setCell(int rownum, int colnum, DocContent content) {
+	public void setCell(int rownum, int colnum, Article content) {
 		if (rownum >= 0 && rownum < this.rownum && colnum >= 0 && colnum < this.colnum) {
 			data[rownum][colnum] = content;
 		}

@@ -9,8 +9,8 @@ import java.io.InputStream;
 import java.util.List;
 
 import com.transdoc.exception.WordParsingException;
-import com.transdoc.model.DocContent;
-import com.transdoc.model.DocPictureData;
+import com.transdoc.model.Article;
+import com.transdoc.model.Image;
 
 /**
  * BaseWordParser
@@ -86,12 +86,12 @@ public abstract class BaseWordParser {
 	 * 
 	 * @return 解析文档得到的通用对象
 	 */
-	public abstract DocContent getDocContent();
+	public abstract Article getArticle();
 
 	/**
 	 * 提取doc文档中所有图片的二进制数据
 	 * 
 	 * @return 图片二进制数据列表
 	 */
-	public abstract List<DocPictureData> getPictureDatas();
+	public abstract List<Image> getImages();
 }

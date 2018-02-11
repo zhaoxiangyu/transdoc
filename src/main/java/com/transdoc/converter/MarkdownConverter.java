@@ -3,7 +3,7 @@ package com.transdoc.converter;
 import java.util.List;
 import java.util.Queue;
 
-import com.transdoc.model.DocContent;
+import com.transdoc.model.Article;
 import com.transdoc.model.DocParagraph;
 import com.transdoc.model.DocTable;
 
@@ -15,26 +15,26 @@ import com.transdoc.model.DocTable;
  */
 public class MarkdownConverter {
 
-	private DocContent docContent;
+	private Article article;
 
-	public MarkdownConverter(DocContent docContent) {
+	public MarkdownConverter(Article article) {
 		super();
-		this.docContent = docContent;
+		this.article = article;
 	}
 
 	public String toMdString() {
-		return docContent == null ? "" : toMdString(docContent);
+		return article == null ? "" : toMdString(article);
 	}
 
-	private String toMdString(DocContent docContent) {
-		if (docContent == null) {
+	private String toMdString(Article article) {
+		if (article == null) {
 			// 合并单元格时,可能存在空的单元格
 			return "";
 		}
 		
-		List<DocParagraph> paragraphs = docContent.listParagraphs();
-		Queue<DocTable> tables = docContent.listTables();
-		Queue<String> pictures = docContent.listPictures();
+		List<DocParagraph> paragraphs = article.listParagraphs();
+		Queue<DocTable> tables = article.listTables();
+		Queue<String> pictures = article.listPictures();
 
 		// 将文档信息进行简单组装,获取md格式文本
 		StringBuilder mdContent = new StringBuilder();
@@ -99,7 +99,7 @@ public class MarkdownConverter {
 		if (table == null) {
 		} else if (table.isBlock()) {
 			// 代码块
-			DocContent cell = table.getCell(0, 0);
+			Article cell = table.getCell(0, 0);
 			List<DocParagraph> paragraphs = cell.getParagraphs();
 			tableContent.append("```\n");
 			for (DocParagraph docParagraph : paragraphs) {

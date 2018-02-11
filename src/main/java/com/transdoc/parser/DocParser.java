@@ -17,9 +17,9 @@ import org.apache.poi.hwpf.usermodel.TableCell;
 import org.apache.poi.hwpf.usermodel.TableIterator;
 import org.apache.poi.hwpf.usermodel.TableRow;
 
-import com.transdoc.model.DocContent;
+import com.transdoc.model.Article;
 import com.transdoc.model.DocParagraph;
-import com.transdoc.model.DocPictureData;
+import com.transdoc.model.Image;
 import com.transdoc.model.DocTable;
 import com.transdoc.util.StringUtils;
 
@@ -36,7 +36,7 @@ public class DocParser extends BaseWordParser {
 	/** 文档整体范围 */
 	private Range docRange;
 	/** 文档内容 */
-	private DocContent docContent;
+	private Article article;
 	/** 文档的图片对象 */
 	private List<DocPicture> pictures;
 
@@ -44,31 +44,31 @@ public class DocParser extends BaseWordParser {
 		doc = new HWPFDocument(input);
 		input.close();
 		docRange = doc.getRange();
-		docContent = new DocContent();
+		article = new Article();
 		parsePictures();
 		parseTables();
 		parseParagraphs();
 	}
 
 	@Override
-	public DocContent getDocContent() {
-		return docContent;
+	public Article getArticle() {
+		return article;
 	}
 
 	@Override
-	public List<DocPictureData> getPictureDatas() {
-		List<DocPictureData> docPictureDatas = new ArrayList<DocPictureData>();
+	public List<Image> getImages() {
+		List<Image> images = new ArrayList<Image>();
 		if (!pictures.isEmpty()) {
 			for (DocPicture docPicture : pictures) {
 				Picture picture = docPicture.picture;
 
-				DocPictureData docPictureData = new DocPictureData();
-				docPictureData.setContent(picture.getContent());
-				docPictureData.setExtension(picture.suggestFileExtension());
-				docPictureDatas.add(docPictureData);
+				Image image = new Image();
+				image.setContent(picture.getContent());
+				image.setExtension(picture.suggestFileExtension());
+				images.add(image);
 			}
 		}
-		return docPictureDatas;
+		return images;
 	}
 
 	/**
@@ -104,7 +104,7 @@ public class DocParser extends BaseWordParser {
 			if (numRows == 1 && numCells == 1) {
 				// 代码块
 				docTable = new DocTable(numRows, numCells);
-				DocContent cellContent = this.getCellContent(tr.getCell(0), true);
+				Article cellContent = this.getCellContent(tr.getCell(0), true);
 				docTable.setCell(0, 0, cellContent);
 			} else {
 				// 表格
@@ -119,7 +119,7 @@ public class DocParser extends BaseWordParser {
 					tr = table.getRow(i);
 					numCells = tr.numCells();
 					for (int j = 0; j < maxNumCells; j++) {
-						DocContent cellContent = new DocContent();
+						Article cellContent = new Article();
 						if (j < numCells) {
 							cellContent = this.getCellContent(tr.getCell(j), false);
 						}
@@ -129,7 +129,7 @@ public class DocParser extends BaseWordParser {
 			}
 			tables.add(docTable);
 		}
-		docContent.setTables(tables);
+		article.setTables(tables);
 	}
 
 	/**
@@ -141,7 +141,7 @@ public class DocParser extends BaseWordParser {
 	 *            是否是代码块
 	 * @return 提取出来的文本内容
 	 */
-	private DocContent getCellContent(TableCell cell, boolean isCodeBlock) {
+	private Article getCellContent(TableCell cell, boolean isCodeBlock) {
 		int numParagraphs = cell.numParagraphs();
 		List<DocParagraph> paragraphs = new ArrayList<DocParagraph>();
 		for (int k = 0; k < numParagraphs; k++) {
@@ -158,7 +158,7 @@ public class DocParser extends BaseWordParser {
 				paragraphs.add(new DocParagraph(text));
 			}
 		}
-		return new DocContent(paragraphs);
+		return new Article(paragraphs);
 	}
 
 	/**
@@ -231,7 +231,7 @@ public class DocParser extends BaseWordParser {
 				paragraphs.add(new DocParagraph(contentStr, isInList));
 			}
 		}
-		docContent.setParagraphs(paragraphs);
+		article.setParagraphs(paragraphs);
 	}
 
 	/**
