@@ -18,23 +18,21 @@ public class Transformer {
 		return this.toMarkdown(new FileInputStream(docFile), docFile.getName());
 	}
 
-	public String toMarkdown(File docFile, boolean extractPictures, File pictureDir)
-			throws IOException {
-		return this.toMarkdown(new FileInputStream(docFile), docFile.getName(), extractPictures,
-				pictureDir);
+	public String toMarkdown(File docFile, File pictureDir) throws IOException {
+		return this.toMarkdown(new FileInputStream(docFile), docFile.getName(), pictureDir);
 	}
 
 	public String toMarkdown(InputStream docStream, String filename) throws IOException {
-		return this.toMarkdown(docStream, filename, false, null);
+		return this.toMarkdown(docStream, filename, null);
 	}
 
-	public String toMarkdown(InputStream docStream, String filename, boolean extractPictures,
-			File pictureDir) throws IOException {
+	public String toMarkdown(InputStream docStream, String filename, File pictureDir)
+			throws IOException {
 		// 解析并获取word解析的通用数据对象
 		BaseWordParser wordParser = BaseWordParser.parse(docStream);
 		Article article = wordParser.getArticle();
 
-		if (extractPictures) {
+		if (pictureDir != null) {
 			List<Image> images = wordParser.getImages();
 			this.extractPictures(images, pictureDir, article);
 		}
@@ -44,8 +42,8 @@ public class Transformer {
 		return mdConvertor.toMdString();
 	}
 
-	private void extractPictures(List<Image> picturesDatas, File pictureDir,
-			Article article) throws IOException {
+	private void extractPictures(List<Image> picturesDatas, File pictureDir, Article article)
+			throws IOException {
 		if (picturesDatas.isEmpty()) {
 			return;
 		}

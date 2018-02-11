@@ -119,7 +119,7 @@ public class Transdoc {
 						destDir.mkdir();
 
 						File pictureDir = new File(destDir, "pictures");
-						String markdown = transformer.toMarkdown(file, true, pictureDir);
+						String markdown = transformer.toMarkdown(file, pictureDir);
 
 						File mdFile = new File(destDir, docFilename + ".md");
 						FileUtils.writeStringToFile(mdFile, markdown, "UTF-8");
